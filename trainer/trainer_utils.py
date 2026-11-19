@@ -1,5 +1,5 @@
 """
-训练工具函数集合
+# Collection of training utility functions.
 """
 import os
 import sys
@@ -70,7 +70,7 @@ def get_lr(current_step, total_steps, lr):
 
 def init_distributed_mode():
     if int(os.environ.get("RANK", -1)) == -1:
-        return 0  # 非DDP模式
+        return 0  # non-DDP mode
 
     dist.init_process_group(backend="nccl")
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -130,14 +130,14 @@ def lm_checkpoint(lm_config, weight='full_sft', model=None, optimizer=None, epoc
         os.replace(resume_tmp, resume_path)
         del state_dict, resume_data
         torch.cuda.empty_cache()
-    else:  # 加载模式
+    else:  # load mode
         if os.path.exists(resume_path):
             ckp_data = torch.load(resume_path, map_location='cpu')
             saved_ws = ckp_data.get('world_size', 1)
             current_ws = dist.get_world_size() if dist.is_initialized() else 1
             if saved_ws != current_ws:
                 ckp_data['step'] = ckp_data['step'] * saved_ws // current_ws
-                Logger(f'GPU数量变化({saved_ws}→{current_ws})，step已自动转换为{ckp_data["step"]}')
+                Logger(f'GPU count changed ({saved_ws} -> {current_ws}); step automatically converted to {ckp_data["step"]}')
             return ckp_data
         return None
 
@@ -203,13 +203,13 @@ class LMForRewardModel:
         return max(min(score, 3.0), -3.0)
 
 
-# ===== 数学表达式安全求值：替代 eval，只放行算术运算与 math 白名单（长度上限 512） =====
+# ===== Safe evaluation of math expressions: replaces eval, allowing only arithmetic and a whitelisted subset of math (max length 512) =====
 def safe_math_eval(expression):
-    """对模型生成的数学表达式求值：支持 + - * / // % **、math 白名单函数与 pi/e/tau 常量。"""
-    def pow_guard(base, exp):  # 幂运算统一走这里，拦截 9**9**9 / 10**99999 这类把进程算死的输入
-        if abs(exp) > 1e4 or (abs(base) > 1 and abs(exp) * math.log10(abs(base)) > 100): raise ValueError('幂运算结果过大')
+    """Evaluate a math expression produced by the model: supports + - * / // % **, whitelisted math functions, and the pi/e/tau constants."""
+    def pow_guard(base, exp):  # all exponentiation goes through here, blocking inputs like 9**9**9 / 10**99999 that would hang the process
+        if abs(exp) > 1e4 or (abs(base) > 1 and abs(exp) * math.log10(abs(base)) > 100): raise ValueError('Power result too large')
         return base ** exp
-    def resolve(node):  # 同时兼容 sqrt(4) 与 math.sqrt(4) 两种写法
+    def resolve(node):  # also accepts both sqrt(4) and math.sqrt(4)
         if isinstance(node, ast.Name): return node.id
         if isinstance(node, ast.Attribute) and getattr(node.value, 'id', '') == 'math': return node.attr
     def walk(node):
@@ -219,15 +219,15 @@ def safe_math_eval(expression):
         if isinstance(node, ast.UnaryOp): return unary_ops[type(node.op)](walk(node.operand))
         if isinstance(node, ast.BinOp): return bin_ops[type(node.op)](walk(node.left), walk(node.right))
         if isinstance(node, ast.Call) and not node.keywords: return funcs[resolve(node.func)](*map(walk, node.args))
-        raise ValueError(f'不支持的表达式语法: {type(node).__name__}')
+        raise ValueError(f'Unsupported expression syntax: {type(node).__name__}')
     consts = {'pi': math.pi, 'e': math.e, 'tau': math.tau}
     funcs = {'pow': pow_guard, **{n: getattr(math, n) for n in 'sqrt exp log log2 log10 sin cos tan asin acos atan atan2 sinh cosh tanh floor ceil trunc fabs fmod hypot gcd degrees radians'.split()}}
     bin_ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod, ast.Pow: pow_guard}
     unary_ops = {ast.UAdd: operator.pos, ast.USub: operator.neg}
     chars = str.maketrans({'^': '**', '×': '*', '÷': '/', '−': '-', '²': '**2', '³': '**3', '（': '(', '）': ')'})
     expr = str(expression).translate(chars).strip()
-    if not expr or len(expr) > 512: raise ValueError('表达式为空或过长')
+    if not expr or len(expr) > 512: raise ValueError('Expression is empty or too long')
     try:
         return walk(ast.parse(expr, mode='eval').body)
     except (KeyError, SyntaxError, TypeError):
-        raise ValueError('不支持的表达式语法') from None
+        raise ValueError('Unsupported expression syntax') from None

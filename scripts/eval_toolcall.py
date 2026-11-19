@@ -200,37 +200,37 @@ def run_case(prompt, tools, args, model=None, tokenizer=None, client=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="MiniMind ToolCall评测")
-    parser.add_argument('--backend', default='local', choices=['local', 'api'], type=str, help="推理后端（local=本地模型，api=OpenAI兼容接口）")
-    parser.add_argument('--load_from', default='../model', type=str, help="模型加载路径（model=原生torch权重，其他路径=transformers格式）")
-    parser.add_argument('--save_dir', default='../out', type=str, help="模型权重目录")
-    parser.add_argument('--weight', default='full_sft', type=str, help="权重名称前缀（pretrain, full_sft, rlhf, reason, ppo_actor, grpo, spo）")
-    parser.add_argument('--hidden_size', default=768, type=int, help="隐藏层维度")
-    parser.add_argument('--num_hidden_layers', default=8, type=int, help="隐藏层数量")
-    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")
-    parser.add_argument('--max_new_tokens', default=512, type=int, help="最大生成长度")
-    parser.add_argument('--temperature', default=0.9, type=float, help="生成温度，控制随机性（0-1，越大越随机）")
-    parser.add_argument('--top_p', default=0.9, type=float, help="nucleus采样阈值（0-1）")
-    parser.add_argument('--show_speed', default=0, type=int, help="显示decode速度（tokens/s）")
-    parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu', type=str, help="运行设备")
-    parser.add_argument('--api_base_url', default="http://localhost:11434/v1", type=str, help="OpenAI兼容接口的base_url")
-    parser.add_argument('--api_key', default='sk-123', type=str, help="OpenAI兼容接口的api_key")
-    parser.add_argument('--api_model', default='jingyaogong/minimind-3:latest', type=str, help="API请求时使用的模型名称")
-    parser.add_argument('--stream', default=1, type=int, help="API模式下是否流式输出（0=否，1=是）")
+    parser = argparse.ArgumentParser(description="MiniMind ToolCall evaluation")
+    parser.add_argument('--backend', default='local', choices=['local', 'api'], type=str, help="inference backend (local=local model, api=OpenAI-compatible endpoint)")
+    parser.add_argument('--load_from', default='../model', type=str, help="model load path (model=native torch weights, any other path=transformers format)")
+    parser.add_argument('--save_dir', default='../out', type=str, help="model weights directory")
+    parser.add_argument('--weight', default='full_sft', type=str, help="weight name prefix (pretrain, full_sft, rlhf, reason, ppo_actor, grpo, spo)")
+    parser.add_argument('--hidden_size', default=768, type=int, help="hidden size")
+    parser.add_argument('--num_hidden_layers', default=8, type=int, help="number of hidden layers")
+    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="use MoE architecture (0=no, 1=yes)")
+    parser.add_argument('--max_new_tokens', default=512, type=int, help="max generation length")
+    parser.add_argument('--temperature', default=0.9, type=float, help="generation temperature controlling randomness (0-1, higher is more random)")
+    parser.add_argument('--top_p', default=0.9, type=float, help="nucleus sampling threshold (0-1)")
+    parser.add_argument('--show_speed', default=0, type=int, help="show decode speed (tokens/s)")
+    parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu', type=str, help="device to run on")
+    parser.add_argument('--api_base_url', default="http://localhost:11434/v1", type=str, help="base_url of the OpenAI-compatible endpoint")
+    parser.add_argument('--api_key', default='sk-123', type=str, help="api_key of the OpenAI-compatible endpoint")
+    parser.add_argument('--api_model', default='jingyaogong/minimind-3:latest', type=str, help="model name used in API requests")
+    parser.add_argument('--stream', default=1, type=int, help="stream output in API mode (0=no, 1=yes)")
     args = parser.parse_args()
 
     model = tokenizer = client = None
     if args.backend == 'local': model, tokenizer = init_model(args)
     else: client = OpenAI(api_key=args.api_key, base_url=args.api_base_url)
 
-    input_mode = int(input('[0] 自动测试\n[1] 手动输入\n'))
+    input_mode = int(input('[0] Automatic test\n[1] Manual input\n'))
 
     cases = [{"prompt": case["prompt"], "tools": get_tools(case["tools"]), "tool_names": case["tools"]} for case in TEST_CASES] if input_mode == 0 else iter(lambda: {"prompt": input('💬: '), "tools": TOOLS, "tool_names": [t["function"]["name"] for t in TOOLS]}, {"prompt": "", "tools": TOOLS, "tool_names": []})
     for case in cases:
         if not case["prompt"]: break
         setup_seed(random.randint(0, 31415926))
         if input_mode == 0:
-            print(f'📦 可用工具: {case["tool_names"]}\n')
+            print(f'📦 Available tools: {case["tool_names"]}\n')
             print(f'💬: {case["prompt"]}')
         run_case(case["prompt"], case["tools"], args, model=model, tokenizer=tokenizer, client=client)
         print('\n' + '-' * 50 + '\n')

@@ -2,18 +2,18 @@ import torch
 from torch import optim, nn
 
 
-# 定义Lora网络结构
+# Define the LoRA network structure
 class LoRA(nn.Module):
     def __init__(self, in_features, out_features, rank, lora_alpha=None):
         super().__init__()
-        self.rank = rank  # LoRA的秩（rank），控制低秩矩阵的大小
+        self.rank = rank  # LoRA rank; controls the size of the low-rank matrices
         scaling = (rank if lora_alpha is None else lora_alpha) / rank
         self.register_buffer("scaling", torch.tensor(scaling, dtype=torch.float32))
-        self.A = nn.Linear(in_features, rank, bias=False)  # 低秩矩阵A
-        self.B = nn.Linear(rank, out_features, bias=False)  # 低秩矩阵B
-        # 矩阵A高斯初始化
+        self.A = nn.Linear(in_features, rank, bias=False)  # Low-rank matrix A
+        self.B = nn.Linear(rank, out_features, bias=False)  # Low-rank matrix B
+        # Gaussian initialization for matrix A
         self.A.weight.data.normal_(mean=0.0, std=0.02)
-        # 矩阵B全0初始化
+        # Zero initialization for matrix B
         self.B.weight.data.zero_()
 
     def forward(self, x):
@@ -27,7 +27,7 @@ def apply_lora(model, rank=16, lora_alpha=None):
             setattr(module, "lora", lora)
             original_forward = module.forward
 
-            # 显式绑定
+            # Bind explicitly
             def forward_with_lora(x, layer1=original_forward, layer2=lora):
                 return layer1(x) + layer2(x)
 
