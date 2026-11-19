@@ -6,7 +6,7 @@ from tokenizers import decoders, models, pre_tokenizers, trainers, Tokenizer
 
 DATA_PATH = '../dataset/sft_t2t_mini.jsonl'
 TOKENIZER_DIR = '../model_learn_tokenizer/'
-VOCAB_SIZE = 6400
+VOCAB_SIZE = 16000
 SPECIAL_TOKENS_NUM = 36
 MAX_LINES = 0  # 0 表示读取全部；设为正数则只取前 N 条（快速试跑）
 
