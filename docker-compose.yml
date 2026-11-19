@@ -1,0 +1,24 @@
+services:
+  minimind:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        BASE_TAG: "26.11-py3"
+    image: minimind:local
+    container_name: minimind
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      HOME: /tmp
+      TB_LOGDIR: /workspace/minimind/tb_logs
+    user: "1000:1000"   # match host user so files written to the mount are not root-owned
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    volumes:
+      - /raid/minimind:/workspace/minimind
+    ports:
+      - "6006:6006"     # TensorBoard
+    restart: unless-stopped

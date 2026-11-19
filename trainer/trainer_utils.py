@@ -17,6 +17,27 @@ from torch.utils.data import Sampler
 from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
 from model.model_minimind import MiniMindForCausalLM
 
+class TensorBoardTracker:
+    """Drop-in for the swanlab/wandb module: exposes init() and log(). Used when TB_LOGDIR is set."""
+    id = None
+
+    def init(self, project=None, name=None, **kwargs):
+        from torch.utils.tensorboard import SummaryWriter
+        self.writer = SummaryWriter(os.path.join(os.environ['TB_LOGDIR'], project or 'run', name or 'run'))
+        self.step = 0
+
+    def log(self, data):
+        for k, v in data.items():
+            self.writer.add_scalar(k, float(v), self.step)
+        self.step += 1
+        self.writer.flush()
+
+def get_tracker():
+    if os.environ.get('TB_LOGDIR'):
+        return TensorBoardTracker()
+    import swanlab
+    return swanlab
+
 def get_model_params(model, config):
     total = sum(p.numel() for p in model.parameters()) / 1e6
     n_routed = getattr(config, 'n_routed_experts', getattr(config, 'num_experts', 0))
