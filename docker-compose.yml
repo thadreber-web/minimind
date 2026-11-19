@@ -20,5 +20,5 @@ services:
     volumes:
       - /raid/minimind:/workspace/minimind
     ports:
-      - "6006:6006"     # TensorBoard
+      - "6006:6006"     # TensorBoard, published on all host interfaces: reachable from other machines on the network, no auth
     restart: unless-stopped
