@@ -9,6 +9,7 @@ import ast
 import operator
 import random
 import math
+import time
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -23,7 +24,10 @@ class TensorBoardTracker:
 
     def init(self, project=None, name=None, **kwargs):
         from torch.utils.tensorboard import SummaryWriter
-        self.writer = SummaryWriter(os.path.join(os.environ['TB_LOGDIR'], project or 'run', name or 'run'))
+        # Unique dir per run (timestamp + pid) so re-runs with identical hyperparameters
+        # stay separate in TensorBoard instead of merging/purging into one run.
+        run_dir = f"{name or 'run'}-{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid()}"
+        self.writer = SummaryWriter(os.path.join(os.environ['TB_LOGDIR'], project or 'run', run_dir))
         self.step = 0
 
     def log(self, data):
