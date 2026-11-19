@@ -51,14 +51,14 @@ def main():
     args = parser.parse_args()
     
     prompts = [
-        '你有什么特长？',
-        '为什么天空是蓝色的',
-        '请用Python写一个计算斐波那契数列的函数',
-        '解释一下"光合作用"的基本过程',
-        '如果明天下雨，我应该如何出门',
-        '比较一下猫和狗作为宠物的优缺点',
-        '解释什么是机器学习',
-        '推荐一些中国的美食'
+        'What are your strengths?',
+        'Why is the sky blue?',
+        'Write a Python function that computes the Fibonacci sequence.',
+        'Explain the basic process of "photosynthesis".',
+        'If it rains tomorrow, how should I get ready to go out?',
+        'Compare the pros and cons of cats and dogs as pets.',
+        'Explain what machine learning is.',
+        'Recommend some famous dishes from around the world.'
     ]
     
     conversation = []

@@ -190,7 +190,7 @@ class LMForRewardModel:
     def get_score(self, messages, response):
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in messages[:-1]])
         last_query = messages[-1]['content'] if messages else ""
-        message_context = f"{history_text}\n以上是对话历史。我的新问题是：\n{last_query}" if history_text else last_query
+        message_context = f"{history_text}\nThe above is the conversation history. My new question is:\n{last_query}" if history_text else last_query
         eval_messages = [
             {"role": "user", "content": message_context},
             {"role": "assistant", "content": response}
