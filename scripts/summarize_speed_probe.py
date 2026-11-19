@@ -11,6 +11,7 @@ import numpy as np
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 TB = os.environ.get('TB_LOGDIR', 'tb_logs')
+LOG_INTERVAL = 5  # must match --log_interval in run_speed_probe.sh
 # project, label, positions per microbatch step, total microbatch steps in the real run
 # (pretrain: 4344 optimizer steps x acc 8; SFT: 42,004 steps at acc 1; both pad to seq 768)
 CFGS = [
@@ -38,13 +39,17 @@ for proj, label, tok, total in CFGS:
     if len(wt) < 6:
         print(f'{label:24s} too few points ({len(wt)}) - crashed early? check experiments/probe/')
         continue
-    per_step = np.diff(wt) / np.diff(st)
+    # st is the tracker's LOG COUNTER (+1 per log call), not the training step:
+    # each log interval spans LOG_INTERVAL training steps.
+    per_step = np.diff(wt) / np.diff(st) / LOG_INTERVAL
     warm = per_step[4:]  # skip compile/warmup points
     med = float(np.median(warm))
     spikes = int((warm > 3 * med).sum())  # recompile or save spikes
     results[proj] = med
+    span_avg = (wt[-1] - wt[0]) / ((st[-1] - st[0]) * LOG_INTERVAL)  # independent cross-check
     print(f'{label:24s} {med:7.3f} s/step  {tok / med:10,.0f} pos/s  '
-          f'projected stage ETA {total * med / 3600:5.1f} h  (points {len(wt)}, spikes {spikes})')
+          f'projected stage ETA {total * med / 3600:5.1f} h  '
+          f'(points {len(wt)}, spikes {spikes}, span-avg {span_avg:.3f} s/step)')
 
 for a, b, stage in [('probe-pt-b32', 'probe-pt-b32-compile', 'pretrain'),
                     ('probe-sft-b16', 'probe-sft-b16-compile', 'sft')]:
