@@ -19,6 +19,8 @@ CFGS = [
     ('probe-pt-b32-compile',  'pretrain b32 compile',  32 * 768, 4344 * 8),
     ('probe-sft-b16',         'sft b16',               16 * 768, 42004),
     ('probe-sft-b16-compile', 'sft b16 compile',       16 * 768, 42004),
+    ('probe-pt-b32-dynamic',  'pretrain b32 dynamic',  32 * 768, 4344 * 8),
+    ('probe-sft-b16-dynamic', 'sft b16 dynamic',       16 * 768, 42004),
 ]
 
 results = {}
@@ -55,6 +57,11 @@ for a, b, stage in [('probe-pt-b32', 'probe-pt-b32-compile', 'pretrain'),
                     ('probe-sft-b16', 'probe-sft-b16-compile', 'sft')]:
     if a in results and b in results:
         print(f'{stage} compile speedup: {results[a] / results[b]:.2f}x')
+
+for a, b, stage in [('probe-pt-b32-compile', 'probe-pt-b32-dynamic', 'pretrain'),
+                    ('probe-sft-b16-compile', 'probe-sft-b16-dynamic', 'sft')]:
+    if a in results and b in results:
+        print(f'{stage} dynamic vs static compile: {results[a] / results[b]:.2f}x (>1 means dynamic faster)')
 
 print('note: ETA assumes probe steady state holds at full dataset scale; '
       'spikes > 0 with compile suggest recompiles (dynamic expert token counts).')
