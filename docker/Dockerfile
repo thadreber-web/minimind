@@ -6,7 +6,11 @@ FROM nvcr.io/nvidia/pytorch:${BASE_TAG}
 # conflicting versions (e.g. numpy==1.26.4), so lift the constraint for this one step.
 # torch/torchvision are commented out in requirements.txt and come from the base image.
 COPY requirements.txt /tmp/requirements.txt
-RUN PIP_CONSTRAINT= pip install --no-cache-dir -r /tmp/requirements.txt tensorboard
+# requirements.txt pins numpy==1.26.4, but the base image ships NumPy 2 and its own packages
+# (pyarrow 26, ml-dtypes, contourpy) need it; with numpy 1.x `import datasets` fails and every
+# trainer imports it. So drop the numpy pin and keep the base image's NumPy 2.
+RUN grep -v -i '^numpy' /tmp/requirements.txt > /tmp/requirements.nonumpy.txt \
+ && PIP_CONSTRAINT= pip install --no-cache-dir -r /tmp/requirements.nonumpy.txt tensorboard
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

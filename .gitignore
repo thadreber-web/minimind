@@ -5,3 +5,7 @@ out
 website/
 docs-minimind/
 tb_logs
+
+# downloaded training/tokenizer data (re-create with scripts/convert_to_minimind.py; see DATASETS.md)
+dataset/*.jsonl
+dataset/*.parquet
