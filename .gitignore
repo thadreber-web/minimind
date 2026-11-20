@@ -9,3 +9,19 @@ tb_logs
 # downloaded training/tokenizer data (re-create with scripts/convert_to_minimind.py; see DATASETS.md)
 dataset/*.jsonl
 dataset/*.parquet
+
+# local training artifacts — weights/resume states, multi-GB, never push
+checkpoints/
+
+# experiment outputs: logs, manifests, eval results, data samples, before-snapshots
+experiments/
+
+# docker build log
+docker/build.log
+
+# internal planning/lab docs — local only, do not push (see PLAYBOOK.md)
+DATASETS.md
+ENGLISH_MODEL_GUIDE.md
+EXPERIMENT_LOG.md
+PLAYBOOK.md
+REASONING.md
