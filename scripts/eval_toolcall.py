@@ -16,14 +16,14 @@ from trainer.trainer_utils import setup_seed, get_model_params, safe_math_eval
 warnings.filterwarnings('ignore')
 
 TOOLS = [
-    {"type": "function", "function": {"name": "calculate_math", "description": "计算数学表达式的结果，支持加减乘除、幂运算、开方等", "parameters": {"type": "object", "properties": {"expression": {"type": "string", "description": "数学表达式，如123+456、2**10、sqrt(144)"}}, "required": ["expression"]}}},
-    {"type": "function", "function": {"name": "get_current_time", "description": "获取当前日期和时间，支持指定时区", "parameters": {"type": "object", "properties": {"timezone": {"type": "string", "description": "时区名称，如Asia/Shanghai、America/New_York", "default": "Asia/Shanghai"}}, "required": []}}},
-    {"type": "function", "function": {"name": "random_number", "description": "生成指定范围内的随机数", "parameters": {"type": "object", "properties": {"min": {"type": "integer", "description": "最小值", "default": 0}, "max": {"type": "integer", "description": "最大值", "default": 100}}, "required": []}}},
-    {"type": "function", "function": {"name": "text_length", "description": "计算文本的字符数和单词数", "parameters": {"type": "object", "properties": {"text": {"type": "string", "description": "要统计的文本"}}, "required": ["text"]}}},
-    {"type": "function", "function": {"name": "unit_converter", "description": "进行单位换算，支持长度、重量、温度等", "parameters": {"type": "object", "properties": {"value": {"type": "number", "description": "要转换的数值"}, "from_unit": {"type": "string", "description": "源单位，如km、miles、kg、pounds、celsius、fahrenheit"}, "to_unit": {"type": "string", "description": "目标单位"}}, "required": ["value", "from_unit", "to_unit"]}}},
-    {"type": "function", "function": {"name": "get_current_weather", "description": "获取指定城市的当前天气信息，包括温度、湿度和天气状况", "parameters": {"type": "object", "properties": {"location": {"type": "string", "description": "城市名称，如北京、上海、New York"}, "unit": {"type": "string", "description": "温度单位，celsius或fahrenheit", "enum": ["celsius", "fahrenheit"], "default": "celsius"}}, "required": ["location"]}}},
-    {"type": "function", "function": {"name": "get_exchange_rate", "description": "查询两种货币之间的实时汇率", "parameters": {"type": "object", "properties": {"from_currency": {"type": "string", "description": "源货币代码，如USD、CNY、EUR"}, "to_currency": {"type": "string", "description": "目标货币代码，如USD、CNY、EUR"}}, "required": ["from_currency", "to_currency"]}}},
-    {"type": "function", "function": {"name": "translate_text", "description": "将文本翻译成目标语言", "parameters": {"type": "object", "properties": {"text": {"type": "string", "description": "要翻译的文本"}, "target_language": {"type": "string", "description": "目标语言，如english、chinese、japanese、french"}}, "required": ["text", "target_language"]}}},
+    {"type": "function", "function": {"name": "calculate_math", "description": "Evaluate a math expression; supports + - * /, exponentiation and square roots", "parameters": {"type": "object", "properties": {"expression": {"type": "string", "description": "Math expression, e.g. 123+456, 2**10, sqrt(144)"}}, "required": ["expression"]}}},
+    {"type": "function", "function": {"name": "get_current_time", "description": "Get the current date and time, optionally for a given timezone", "parameters": {"type": "object", "properties": {"timezone": {"type": "string", "description": "Timezone name, e.g. Asia/Shanghai, America/New_York", "default": "Asia/Shanghai"}}, "required": []}}},
+    {"type": "function", "function": {"name": "random_number", "description": "Generate a random number within a given range", "parameters": {"type": "object", "properties": {"min": {"type": "integer", "description": "Minimum value", "default": 0}, "max": {"type": "integer", "description": "Maximum value", "default": 100}}, "required": []}}},
+    {"type": "function", "function": {"name": "text_length", "description": "Count the characters and words in a text", "parameters": {"type": "object", "properties": {"text": {"type": "string", "description": "Text to measure"}}, "required": ["text"]}}},
+    {"type": "function", "function": {"name": "unit_converter", "description": "Convert between units of length, weight, temperature and more", "parameters": {"type": "object", "properties": {"value": {"type": "number", "description": "Value to convert"}, "from_unit": {"type": "string", "description": "Source unit, e.g. km, miles, kg, pounds, celsius, fahrenheit"}, "to_unit": {"type": "string", "description": "Target unit"}}, "required": ["value", "from_unit", "to_unit"]}}},
+    {"type": "function", "function": {"name": "get_current_weather", "description": "Get the current weather for a city, including temperature, humidity and conditions", "parameters": {"type": "object", "properties": {"location": {"type": "string", "description": "City name, e.g. Beijing, Shanghai, New York"}, "unit": {"type": "string", "description": "Temperature unit, celsius or fahrenheit", "enum": ["celsius", "fahrenheit"], "default": "celsius"}}, "required": ["location"]}}},
+    {"type": "function", "function": {"name": "get_exchange_rate", "description": "Look up the current exchange rate between two currencies", "parameters": {"type": "object", "properties": {"from_currency": {"type": "string", "description": "Source currency code, e.g. USD, CNY, EUR"}, "to_currency": {"type": "string", "description": "Target currency code, e.g. USD, CNY, EUR"}}, "required": ["from_currency", "to_currency"]}}},
+    {"type": "function", "function": {"name": "translate_text", "description": "Translate a text into the target language", "parameters": {"type": "object", "properties": {"text": {"type": "string", "description": "Text to translate"}, "target_language": {"type": "string", "description": "Target language, e.g. english, french, spanish, japanese"}}, "required": ["text", "target_language"]}}},
 ]
 
 MOCK_RESULTS = {
@@ -32,9 +32,9 @@ MOCK_RESULTS = {
     "random_number": lambda args: {"result": random.randint(int(args.get("min", 0)), int(args.get("max", 100)))},
     "text_length": lambda args: {"characters": len(args.get("text", "")), "words": len(args.get("text", "").split())},
     "unit_converter": lambda args: {"result": round(float(args.get("value", 0)) * 0.621371, 2), "from": f"{args.get('value', 0)} {args.get('from_unit', '')}", "to": args.get("to_unit", "")},
-    "get_current_weather": lambda args: {"city": args.get("location"), "temperature": "22°C", "humidity": "65%", "condition": "晴"},
+    "get_current_weather": lambda args: {"city": args.get("location"), "temperature": "22°C", "humidity": "65%", "condition": "Sunny"},
     "get_exchange_rate": lambda args: {"from": args.get("from_currency", ""), "to": args.get("to_currency", ""), "rate": 7.15},
-    "translate_text": lambda args: {"translated": "hello world"},
+    "translate_text": lambda args: {"translated": "Bonjour le monde"},
 }
 
 TOOL_MAP = {t["function"]["name"]: t for t in TOOLS}
@@ -43,13 +43,13 @@ def get_tools(names):
     return [TOOL_MAP[n] for n in names]
 
 TEST_CASES = [
-    {"prompt": "帮我算一下 256 乘以 37 等于多少", "tools": ["calculate_math", "get_current_time"]},
-    {"prompt": "现在几点了？", "tools": ["get_current_time", "random_number"]},
-    {"prompt": "帮我把100公里换算成英里", "tools": ["unit_converter", "calculate_math"]},
-    {"prompt": "帮我生成一个1到1000的随机数，然后计算它的平方", "tools": ["random_number", "calculate_math", "text_length"]},
-    {"prompt": "北京今天天气怎么样？", "tools": ["get_current_weather", "get_current_time"]},
-    {"prompt": "查一下美元兑人民币汇率", "tools": ["get_exchange_rate", "get_current_time"]},
-    {"prompt": "把'你好世界'翻译成英文", "tools": ["translate_text", "text_length"]},
+    {"prompt": "What is 256 times 37?", "tools": ["calculate_math", "get_current_time"]},
+    {"prompt": "What time is it now?", "tools": ["get_current_time", "random_number"]},
+    {"prompt": "Convert 100 kilometers to miles", "tools": ["unit_converter", "calculate_math"]},
+    {"prompt": "Generate a random number between 1 and 1000, then compute its square", "tools": ["random_number", "calculate_math", "text_length"]},
+    {"prompt": "What is the weather like in Beijing today?", "tools": ["get_current_weather", "get_current_time"]},
+    {"prompt": "Look up the USD to CNY exchange rate", "tools": ["get_exchange_rate", "get_current_time"]},
+    {"prompt": "Translate 'hello world' into French", "tools": ["translate_text", "text_length"]},
     {"prompt": "What is the weather in Tokyo? Also convert 30 celsius to fahrenheit.", "tools": ["get_current_weather", "unit_converter", "get_current_time"]},
 ]
 
@@ -105,11 +105,11 @@ def execute_tool(call, arguments=None):
         args = {}
     fn = MOCK_RESULTS.get(name)
     if not fn:
-        return {"error": f"未知工具: {name}"}
+        return {"error": f"Unknown tool: {name}"}
     try:
         return fn(args)
     except Exception as e:
-        return {"error": f"工具执行失败: {str(e)[:80]}"}
+        return {"error": f"Tool execution failed: {str(e)[:80]}"}
 
 
 def generate(model, tokenizer, messages, tools, args):

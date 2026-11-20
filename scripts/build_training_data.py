@@ -20,7 +20,7 @@ from multiprocessing import Pool
 from datasets import load_dataset
 from tokenizers import Tokenizer
 
-CJK = re.compile(r'[一-鿿぀-ヿ가-힯]')
+CJK = re.compile(r'[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]')
 PERMISSIVE = {'mit', 'apache-2.0', 'bsd-3-clause', 'bsd-2-clause', 'isc', 'unlicense', 'cc0-1.0'}
 SEP = '<|im_end|><|im_start|>'
 STATS = {'cjk_dropped': 0, 'duplicates_dropped': 0, 'empty_dropped': 0}

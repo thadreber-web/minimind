@@ -224,7 +224,7 @@ def safe_math_eval(expression):
     funcs = {'pow': pow_guard, **{n: getattr(math, n) for n in 'sqrt exp log log2 log10 sin cos tan asin acos atan atan2 sinh cosh tanh floor ceil trunc fabs fmod hypot gcd degrees radians'.split()}}
     bin_ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod, ast.Pow: pow_guard}
     unary_ops = {ast.UAdd: operator.pos, ast.USub: operator.neg}
-    chars = str.maketrans({'^': '**', '×': '*', '÷': '/', '−': '-', '²': '**2', '³': '**3', '（': '(', '）': ')'})
+    chars = str.maketrans({'^': '**', '×': '*', '÷': '/', '−': '-', '²': '**2', '³': '**3', '\uff08': '(', '\uff09': ')'})
     expr = str(expression).translate(chars).strip()
     if not expr or len(expr) > 512: raise ValueError('Expression is empty or too long')
     try:

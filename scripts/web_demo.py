@@ -73,21 +73,8 @@ st.markdown("""
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Multilingual text
+# UI text (English only)
 LANG_TEXTS = {
-    'zh': {
-        'settings': '模型设定调整',
-        'history_rounds': '历史对话轮次',
-        'max_length': '最大生成长度',
-        'temperature': '温度',
-        'thinking': '思考',
-        'tools': '工具',
-        'language': '语言',
-        'send': '给 MiniMind 发送消息',
-        'disclaimer': 'AI 生成内容可能存在错误，请仔细核实',
-        'think_tip': '自适应思考，目前多轮对话或Tool Call共存时思考不稳定',
-        'tool_select': '工具选择（最多4个）',
-    },
     'en': {
         'settings': 'Model Settings',
         'history_rounds': 'History Rounds',
@@ -104,19 +91,18 @@ LANG_TEXTS = {
 }
 
 def get_text(key):
-    lang = st.session_state.get('lang', 'en')
-    return LANG_TEXTS.get(lang, {}).get(key, LANG_TEXTS['zh'].get(key, key))
+    return LANG_TEXTS.get(st.session_state.get('lang', 'en'), LANG_TEXTS['en']).get(key, key)
 
 # Tool definitions
 TOOLS = [
-    {"type": "function", "function": {"name": "calculate_math", "description": "计算数学表达式", "parameters": {"type": "object", "properties": {"expression": {"type": "string", "description": "数学表达式"}}, "required": ["expression"]}}},
-    {"type": "function", "function": {"name": "get_current_time", "description": "获取当前时间", "parameters": {"type": "object", "properties": {"timezone": {"type": "string", "default": "Asia/Shanghai"}}, "required": []}}},
-    {"type": "function", "function": {"name": "random_number", "description": "生成随机数", "parameters": {"type": "object", "properties": {"min": {"type": "integer"}, "max": {"type": "integer"}}, "required": ["min", "max"]}}},
-    {"type": "function", "function": {"name": "text_length", "description": "计算文本长度", "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}},
-    {"type": "function", "function": {"name": "unit_converter", "description": "单位转换", "parameters": {"type": "object", "properties": {"value": {"type": "number"}, "from_unit": {"type": "string"}, "to_unit": {"type": "string"}}, "required": ["value", "from_unit", "to_unit"]}}},
-    {"type": "function", "function": {"name": "get_current_weather", "description": "获取天气", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}},
-    {"type": "function", "function": {"name": "get_exchange_rate", "description": "获取汇率", "parameters": {"type": "object", "properties": {"from_currency": {"type": "string"}, "to_currency": {"type": "string"}}, "required": ["from_currency", "to_currency"]}}},
-    {"type": "function", "function": {"name": "translate_text", "description": "翻译文本", "parameters": {"type": "object", "properties": {"text": {"type": "string"}, "target_lang": {"type": "string"}}, "required": ["text", "target_lang"]}}},
+    {"type": "function", "function": {"name": "calculate_math", "description": "Calculate a math expression", "parameters": {"type": "object", "properties": {"expression": {"type": "string", "description": "Math expression"}}, "required": ["expression"]}}},
+    {"type": "function", "function": {"name": "get_current_time", "description": "Get current time", "parameters": {"type": "object", "properties": {"timezone": {"type": "string", "default": "Asia/Shanghai"}}, "required": []}}},
+    {"type": "function", "function": {"name": "random_number", "description": "Generate a random number", "parameters": {"type": "object", "properties": {"min": {"type": "integer"}, "max": {"type": "integer"}}, "required": ["min", "max"]}}},
+    {"type": "function", "function": {"name": "text_length", "description": "Measure text length", "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}},
+    {"type": "function", "function": {"name": "unit_converter", "description": "Unit conversion", "parameters": {"type": "object", "properties": {"value": {"type": "number"}, "from_unit": {"type": "string"}, "to_unit": {"type": "string"}}, "required": ["value", "from_unit", "to_unit"]}}},
+    {"type": "function", "function": {"name": "get_current_weather", "description": "Get weather", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}},
+    {"type": "function", "function": {"name": "get_exchange_rate", "description": "Get exchange rate", "parameters": {"type": "object", "properties": {"from_currency": {"type": "string"}, "to_currency": {"type": "string"}}, "required": ["from_currency", "to_currency"]}}},
+    {"type": "function", "function": {"name": "translate_text", "description": "Translate text", "parameters": {"type": "object", "properties": {"text": {"type": "string"}, "target_lang": {"type": "string"}}, "required": ["text", "target_lang"]}}},
 ]
 
 TOOL_SHORT_NAMES = {
@@ -140,11 +126,11 @@ def execute_tool(tool_name, args):
         elif tool_name == 'unit_converter':
             return {"result": f"{args.get('value', 0)} {args.get('from_unit', '')} = ? {args.get('to_unit', '')}"}
         elif tool_name == 'get_current_weather':
-            return {"result": f"{args.get('city', 'Unknown')}: 晴, 7~10°C"}
+            return {"result": f"{args.get('city', 'Unknown')}: Sunny, 7~10°C"}
         elif tool_name == 'get_exchange_rate':
             return {"result": f"1 {args.get('from_currency', 'USD')} = 7.2 {args.get('to_currency', 'CNY')}"}
         elif tool_name == 'translate_text':
-            return {"result": f"[翻译结果]: hello world"}
+            return {"result": "[Translation result]: hello world"}
         return {"result": "Unknown tool"}
     except Exception as e:
         return {"error": str(e)}
@@ -165,7 +151,7 @@ def process_assistant_content(content, is_streaming=False):
     
     # While streaming with thinking enabled, show it in a collapsible block from the start
     if is_streaming and st.session_state.get('enable_thinking', False) and '</think>' not in content and '<think>' not in content:
-        m = re.search(r'(\n\n(?:我是|您好|你好)[^\n]*)', content)
+        m = re.search(r'(\n\n(?:I am|Hello|Hi|Sure|Certainly|Of course|Here is|Here are|Below is)[^\n]*)', content)
         if m and m.start(1) > 5:
             i = m.start(1)
             think_part = content[:i]
@@ -254,15 +240,14 @@ if not MODEL_PATHS:
 # Model selection
 selected_model = st.sidebar.selectbox('Model', list(MODEL_PATHS.keys()), index=0)
 model_path = MODEL_PATHS[selected_model][0]
-slogan = f"我是 {MODEL_PATHS[selected_model][1]}，有什么可以帮你的？" if st.session_state.get('lang', 'en') == 'zh' else f"I am {MODEL_PATHS[selected_model][1]}, how can I help you?"
+slogan = f"I am {MODEL_PATHS[selected_model][1]}, how can I help you?"
 
 st.sidebar.markdown('<hr style="margin: 12px 0 16px 0;">', unsafe_allow_html=True)
 
 # Language selection
-lang_options = {'Chinese': 'zh', 'English': 'en'}
+lang_options = {'English': 'en'}
 current_lang = st.session_state.get('lang', 'en')
-lang_index = 0 if current_lang == 'zh' else 1
-lang_label = st.sidebar.radio('Language', list(lang_options.keys()), index=lang_index, horizontal=True)
+lang_label = st.sidebar.radio('Language', list(lang_options.keys()), index=0, horizontal=True)
 if lang_options[lang_label] != current_lang:
     st.session_state.lang = lang_options[lang_label]
     st.rerun()
@@ -352,7 +337,7 @@ def main():
         setup_seed(random_seed)
 
         tools = [t for t in TOOLS if t['function']['name'] in st.session_state.get('selected_tools', [])] or None
-        sys_prompt = [] if tools else [{"role": "system", "content": "你是MiniMind，一个乐于助人、知识渊博的AI助手。请用完整且友好的方式回答用户问题。"}]
+        sys_prompt = [] if tools else [{"role": "system", "content": "You are MiniMind, a helpful and knowledgeable AI assistant. Answer the user's questions in a complete and friendly way."}]
         st.session_state.chat_messages = sys_prompt + st.session_state.chat_messages[-(st.session_state.history_chat_num + 1):]
         template_kwargs = {"tokenize": False, "add_generation_prompt": True}
         if st.session_state.get('enable_thinking', False):

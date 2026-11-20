@@ -47,7 +47,7 @@ def main():
         res['overlap_with_training_corpus'][sname] = f"{sum(hashlib.md5(t.encode()).hexdigest() in corpus_hashes for t in texts)}/{len(texts)}"
         res['compression'][sname] = {tname: stats(tok, texts) for tname, tok in toks.items()}
 
-    zh = '人工智能是计算机科学的一个分支。你好，世界！'
+    zh = '\u4eba\u5de5\u667a\u80fd\u662f\u8ba1\u7b97\u673a\u79d1\u5b66\u7684\u4e00\u4e2a\u5206\u652f\u3002\u4f60\u597d\uff0c\u4e16\u754c\uff01'
     res['chinese_roundtrip'] = {n: {'tokens': len(t.encode(zh).ids), 'exact': t.decode(t.encode(zh).ids) == zh} for n, t in toks.items()}
 
     hf = AutoTokenizer.from_pretrained(args.chat_dir)
